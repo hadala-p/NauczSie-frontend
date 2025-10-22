@@ -1,44 +1,98 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import Header from './components/Header';
+import LoginForm from './components/LoginForm';
+import RegisterForm from './components/RegisterForm';
+import Dashboard from './components/Dashboard';
+import { Api } from './lib/api';
+import './styles.css';
 
 function App() {
-  const [message, setMessage] = useState('Witaj w NauczSie!');
-  // Używamy import.meta.env (w Vite) i domyślnie łączymy się z lokalnym backendem
-  const defaultApi = import.meta && import.meta.env && import.meta.env.VITE_API_URL
-    ? import.meta.env.VITE_API_URL
-    : 'http://127.0.0.1:8000';
-  const [apiUrl, setApiUrl] = useState(defaultApi);
+  const defaultApiUrl = import.meta?.env?.VITE_API_URL || 'http://127.0.0.1:8000';
+  const [apiUrl, setApiUrl] = useState(defaultApiUrl.replace(/\/$/, ''));
+  const api = useMemo(() => Api(apiUrl), [apiUrl]);
+
+  const [view, setView] = useState('home');
+  const [token, setToken] = useState(() => localStorage.getItem('nauczsie_token') || '');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
-    // Próba pobrania health z backendu, jeśli VITE_API_URL jest ustawione
-    if (!apiUrl) return;
-    fetch(`${apiUrl.replace(/\/$/, '')}/health`)
-      .then((r) => r.json())
-      .then((j) => setMessage(`Backend: ${j.detail || JSON.stringify(j)}`))
-      .catch(() => setMessage('Nie udało się połączyć z backendem'));
-  }, [apiUrl]);
+    if (!token) { setCurrentUser(null); return; }
+    api.me(token).then(r => { if (r.ok) setCurrentUser(r.body); else { setCurrentUser(null); setToken(''); localStorage.removeItem('nauczsie_token'); } }).catch(() => { setCurrentUser(null); });
+  }, [token, api]);
+
+  function handleNav(to) { setView(to); }
+
+  function handleLogout() {
+    if (token) api.logout(token).catch(() => {});
+    setToken('');
+    setCurrentUser(null);
+    localStorage.removeItem('nauczsie_token');
+    setView('home');
+  }
+
+  function handleLogin(tok) {
+    setToken(tok);
+    localStorage.setItem('nauczsie_token', tok);
+    setView('dashboard');
+  }
+
+  function handleRegistered() {
+    setView('login');
+    setMessage('Zarejestrowano. Możesz się zalogować.');
+    setTimeout(() => setMessage(''), 4000);
+  }
 
   return (
-    <div className="app">
-      <header>
-        <h1>NauczSie - Frontend (MVP)</h1>
-        <p>{message}</p>
-      </header>
+    <div className="app-root">
+      <Header currentUser={currentUser} onNav={handleNav} onLogout={handleLogout} />
+      <main className="container">
+        <aside className="left-panel">
+          <div className="panel card">
+            <label>API URL</label>
+            <input value={apiUrl} onChange={e => setApiUrl(e.target.value)} />
+            <div className="muted small">Ustaw URL backendu (domyślnie http://127.0.0.1:8000)</div>
+          </div>
+        </aside>
 
-      <section className="config">
-        <label>
-          API URL (VITE_API_URL):
-          <input
-            value={apiUrl}
-            onChange={(e) => setApiUrl(e.target.value)}
-            placeholder="https://your-backend.onrender.com"
-          />
-        </label>
-        <p className="hint">Ustaw adres API rendera lub zostaw pusty aby nie robić zapytania.</p>
-      </section>
+        <section className="content">
+          {message && <div className="toast">{message}</div>}
 
-      <footer>
-        <small>Stack: React + Vite → FastAPI → Supabase (Postgres)</small>
-      </footer>
+          {view === 'home' && (
+            <div className="grid">
+              <div className="card big">
+                <h2>Witaj w NauczSie!</h2>
+                <p>Prosty MVP — rejestracja, logowanie, wybór języków, kategorie i generowanie 10 słówek.</p>
+                <div className="cta">
+                  <button onClick={() => setView('register')}>Zarejestruj</button>
+                  <button onClick={() => setView('login')}>Zaloguj</button>
+                </div>
+              </div>
+              <div className="card small muted">
+                <h4>Co dalej?</h4>
+                <ul>
+                  <li>Po rejestracji/zalekowaniu przejdź do Dashboard</li>
+                  <li>Wybierz kategorię i wygeneruj słówka</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {view === 'login' && (
+            <LoginForm api={api} onLogin={handleLogin} defaultUsername={''} />
+          )}
+
+          {view === 'register' && (
+            <RegisterForm api={api} onRegistered={handleRegistered} />
+          )}
+
+          {view === 'dashboard' && (
+            <Dashboard api={api} token={token} />
+          )}
+        </section>
+      </main>
+
+      <footer className="footer">© NauczSie • MVP</footer>
     </div>
   );
 }
