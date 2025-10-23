@@ -5,7 +5,14 @@ const parseJson = async (res) => {
 
 export const Api = (baseUrl) => {
   const url = (path) => `${baseUrl.replace(/\/$/, '')}${path}`;
-  const headers = (token) => token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+  // Read OpenAI key from localStorage under 'nauczsie_openai_key'
+  const headers = (token) => {
+    const openaiKey = typeof localStorage !== 'undefined' ? localStorage.getItem('nauczsie_openai_key') : null;
+    const h = { 'Content-Type': 'application/json' };
+    if (token) h.Authorization = `Bearer ${token}`;
+    if (openaiKey) h['X-OpenAI-Key'] = openaiKey;
+    return h;
+  };
 
   return {
     health: async () => {
@@ -25,11 +32,11 @@ export const Api = (baseUrl) => {
       return { ok: r.ok, status: r.status, body: await parseJson(r) };
     },
     logout: async (token) => {
-      const r = await fetch(url('/logout'), { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+      const r = await fetch(url('/logout'), { method: 'POST', headers: headers(token) });
       return { ok: r.ok, status: r.status, body: await parseJson(r) };
     },
     me: async (token) => {
-      const r = await fetch(url('/user/me'), { headers: { Authorization: `Bearer ${token}` } });
+      const r = await fetch(url('/user/me'), { headers: headers(token) });
       return { ok: r.ok, status: r.status, body: await parseJson(r) };
     },
     updateLangs: async (token, payload) => {
@@ -37,11 +44,11 @@ export const Api = (baseUrl) => {
       return { ok: r.ok, status: r.status, body: await parseJson(r) };
     },
     generate: async (token, categoryId) => {
-      const r = await fetch(url(`/categories/${categoryId}/generate`), { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+      const r = await fetch(url(`/categories/${categoryId}/generate`), { method: 'POST', headers: headers(token) });
       return { ok: r.ok, status: r.status, body: await parseJson(r) };
     },
     myWords: async (token) => {
-      const r = await fetch(url('/words'), { headers: { Authorization: `Bearer ${token}` } });
+      const r = await fetch(url('/words'), { headers: headers(token) });
       return { ok: r.ok, status: r.status, body: await parseJson(r) };
     },
   };

@@ -15,6 +15,7 @@ function App() {
   const [token, setToken] = useState(() => localStorage.getItem('nauczsie_token') || '');
   const [currentUser, setCurrentUser] = useState(null);
   const [message, setMessage] = useState('');
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('nauczsie_openai_key') || '');
 
   useEffect(() => {
     if (!token) { setCurrentUser(null); return; }
@@ -43,6 +44,16 @@ function App() {
     setTimeout(() => setMessage(''), 4000);
   }
 
+  function handleApiKeyChange(v) {
+    setApiKey(v);
+    try { localStorage.setItem('nauczsie_openai_key', v); } catch (e) { /* ignore */ }
+  }
+
+  function clearApiKey() {
+    setApiKey('');
+    try { localStorage.removeItem('nauczsie_openai_key'); } catch (e) { /* ignore */ }
+  }
+
   return (
     <div className="app-root">
       <Header currentUser={currentUser} onNav={handleNav} onLogout={handleLogout} />
@@ -52,6 +63,16 @@ function App() {
             <label>API URL</label>
             <input value={apiUrl} onChange={e => setApiUrl(e.target.value)} />
             <div className="muted small">Ustaw URL backendu (domyślnie http://127.0.0.1:8000)</div>
+          </div>
+
+          <div className="panel card">
+            <label>OpenAI API Key</label>
+            <input value={apiKey} onChange={e => handleApiKeyChange(e.target.value)} placeholder="wklej swój klucz API" />
+            <div style={{ marginTop: 8 }}>
+              <button onClick={() => navigator.clipboard?.writeText(apiKey).catch(() => {})} disabled={!apiKey}>Kopiuj</button>
+              <button onClick={clearApiKey} style={{ marginLeft: 8 }} disabled={!apiKey}>Wyczyść</button>
+            </div>
+            <div className="muted small">Klucz będzie przechowywany w localStorage i wysyłany do backendu przy generowaniu.</div>
           </div>
         </aside>
 
