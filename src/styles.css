@@ -470,3 +470,12 @@ footer {
   }
 }
 
+.footer{margin-top:18px;color:var(--muted);text-align:center}
+
+@media (max-width:900px){
+  .container{flex-direction:column}
+  .left-panel{width:100%}
+  .grid{grid-template-columns:1fr}
+  .dashboard{flex-direction:column}
+  .dashboard .left{width:100%}
+}
