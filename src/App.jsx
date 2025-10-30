@@ -3,7 +3,7 @@ import authService from './services/authService';
 
 function App() {
   // Stan aplikacji
-  const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_URL || 'http://localhost:8000');
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
   const [openaiKey, setOpenaiKey] = useState('');
   const [nativeLanguage, setNativeLanguage] = useState('polish');
   const [targetLanguage, setTargetLanguage] = useState('english');
