@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 
 class AuthService {
   constructor() {
-    this.apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
     
     // Inicjalizacja Supabase client
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
