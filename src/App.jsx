@@ -29,27 +29,18 @@ function App() {
     loadCategories();
     loadTenses();
     
-    // Obsługa callbacku z OAuth - Supabase automatycznie przetwarza hash fragment
-    // Sprawdzamy czy jesteśmy na stronie callbacku
-    if (window.location.pathname === '/auth/callback') {
-      // Supabase przetworzy callback automatycznie w authService.initializeAuth()
-      // Usuwamy hash z URL i przekierowujemy na główną stronę
-      setTimeout(() => {
-        window.history.replaceState({}, '', '/');
-        checkAuthState();
-      }, 500);
-    }
-    
-    // Sprawdzamy stan autoryzacji
-    checkAuthState();
-    
-    // Nasłuchujemy na zmiany stanu autoryzacji
     const handleAuthStateChange = (event) => {
       setIsLoggedIn(event.detail.isLoggedIn);
       setUser(event.detail.user);
+      
+      if (window.location.pathname === '/auth/callback' && event.detail.isLoggedIn) {
+        window.history.replaceState({}, '', '/');
+      }
     };
     
     window.addEventListener('authStateChanged', handleAuthStateChange);
+    
+    checkAuthState();
     
     return () => {
       window.removeEventListener('authStateChanged', handleAuthStateChange);
