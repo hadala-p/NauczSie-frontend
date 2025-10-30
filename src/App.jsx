@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import authService from './services/authService';
 
 function App() {
-  // Stan aplikacji
-  const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_URL || 'http://localhost:8000');
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
   const [openaiKey, setOpenaiKey] = useState('');
   const [nativeLanguage, setNativeLanguage] = useState('polish');
   const [targetLanguage, setTargetLanguage] = useState('english');
@@ -23,27 +22,54 @@ function App() {
   const [categories, setCategories] = useState([]);
   const [tenses, setTenses] = useState([]);
 
-  // Ładowanie danych z API
+  const loadLanguages = useCallback(async () => {
+    try {
+      const response = await fetch(`${apiUrl}/languages`);
+      const data = await response.json();
+      setLanguages(data.languages);
+    } catch (err) {
+      console.error('Błąd ładowania języków:', err);
+    }
+  }, [apiUrl]);
+
+  const loadCategories = useCallback(async () => {
+    try {
+      const response = await fetch(`${apiUrl}/categories`);
+      const data = await response.json();
+      setCategories(data.categories);
+    } catch (err) {
+      console.error('Błąd ładowania kategorii:', err);
+    }
+  }, [apiUrl]);
+
+  const loadTenses = useCallback(async () => {
+    try {
+      const response = await fetch(`${apiUrl}/tenses`);
+      const data = await response.json();
+      setTenses(data.tenses);
+    } catch (err) {
+      console.error('Błąd ładowania czasów:', err);
+    }
+  }, [apiUrl]);
+
+  const checkAuthState = useCallback(() => {
+    const loggedIn = authService.isLoggedIn();
+    const currentUser = authService.getCurrentUser();
+    setIsLoggedIn(loggedIn);
+    setUser(currentUser);
+  }, []);
+
   useEffect(() => {
     loadLanguages();
     loadCategories();
     loadTenses();
     
-    // Obsługa callbacku z OAuth - Supabase automatycznie przetwarza hash fragment
-    // Sprawdzamy czy jesteśmy na stronie callbacku
     if (window.location.pathname === '/auth/callback') {
-      // Supabase przetworzy callback automatycznie w authService.initializeAuth()
-      // Usuwamy hash z URL i przekierowujemy na główną stronę
-      setTimeout(() => {
-        window.history.replaceState({}, '', '/');
-        checkAuthState();
-      }, 500);
+      window.history.replaceState({}, '', '/');
     }
     
-    // Sprawdzamy stan autoryzacji
     checkAuthState();
     
-    // Nasłuchujemy na zmiany stanu autoryzacji
     const handleAuthStateChange = (event) => {
       setIsLoggedIn(event.detail.isLoggedIn);
       setUser(event.detail.user);
@@ -54,44 +80,7 @@ function App() {
     return () => {
       window.removeEventListener('authStateChanged', handleAuthStateChange);
     };
-  }, []);
-
-  const checkAuthState = () => {
-    const loggedIn = authService.isLoggedIn();
-    const currentUser = authService.getCurrentUser();
-    setIsLoggedIn(loggedIn);
-    setUser(currentUser);
-  };
-
-  const loadLanguages = async () => {
-    try {
-      const response = await fetch(`${apiUrl}/languages`);
-      const data = await response.json();
-      setLanguages(data.languages);
-    } catch (err) {
-      console.error('Błąd ładowania języków:', err);
-    }
-  };
-
-  const loadCategories = async () => {
-    try {
-      const response = await fetch(`${apiUrl}/categories`);
-      const data = await response.json();
-      setCategories(data.categories);
-    } catch (err) {
-      console.error('Błąd ładowania kategorii:', err);
-    }
-  };
-
-  const loadTenses = async () => {
-    try {
-      const response = await fetch(`${apiUrl}/tenses`);
-      const data = await response.json();
-      setTenses(data.tenses);
-    } catch (err) {
-      console.error('Błąd ładowania czasów:', err);
-    }
-  };
+  }, [loadLanguages, loadCategories, loadTenses, checkAuthState]);
 
   const generateWords = async () => {
     if (!openaiKey.trim()) {

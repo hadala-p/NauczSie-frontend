@@ -3,9 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 
 class AuthService {
   constructor() {
-    this.apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    
-    // Inicjalizacja Supabase client
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
     
@@ -19,27 +16,24 @@ class AuthService {
     
     this.token = null;
     this.user = null;
+    this.authSubscription = null;
     
-    // Sprawdzamy sesję Supabase przy starcie
     this.initializeAuth();
   }
 
   async initializeAuth() {
     if (!this.supabase) return;
     
-    // Sprawdzamy aktywną sesję
     const { data: { session } } = await this.supabase.auth.getSession();
     
     if (session) {
       await this.handleSession(session);
     }
     
-    // Nasłuchujemy na zmiany stanu autoryzacji
-    this.supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = this.supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
         await this.handleSession(session);
       } else if (event === 'SIGNED_OUT') {
-        // Czyścimy stan lokalny bez wywoływania signOut() (żeby uniknąć rekurencji)
         this.token = null;
         this.user = null;
         localStorage.removeItem('auth_token');
@@ -49,6 +43,8 @@ class AuthService {
         }));
       }
     });
+    
+    this.authSubscription = subscription;
   }
 
   async handleSession(session) {
@@ -73,7 +69,6 @@ class AuthService {
   }
 
 
-  // Logowanie przez Google używając Supabase OAuth
   async loginWithGoogle() {
     if (!this.supabase) {
       throw new Error('Supabase nie jest skonfigurowany. Sprawdź VITE_SUPABASE_URL i VITE_SUPABASE_ANON_KEY w .env');
@@ -81,7 +76,7 @@ class AuthService {
 
     const redirectTo = `${window.location.origin}/auth/callback`;
     
-    const { data, error } = await this.supabase.auth.signInWithOAuth({
+    const { error } = await this.supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: redirectTo
@@ -91,9 +86,6 @@ class AuthService {
     if (error) {
       throw new Error(`Błąd logowania: ${error.message}`);
     }
-
-    // redirectTo zostanie wykonane przez Supabase - użytkownik zostanie przekierowany
-    // Po powrocie z OAuth, handleSession zostanie wywołane automatycznie przez onAuthStateChange
   }
 
   // Wylogowanie
@@ -126,6 +118,13 @@ class AuthService {
   // Pobiera token autoryzacji
   getToken() {
     return this.token;
+  }
+
+  cleanup() {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+      this.authSubscription = null;
+    }
   }
 
   // Wykonuje zapytanie z autoryzacją
