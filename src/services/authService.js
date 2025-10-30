@@ -18,6 +18,7 @@ class AuthService {
     
     this.token = null;
     this.user = null;
+    this.authSubscription = null;
     
     // Sprawdzamy sesję Supabase przy starcie
     this.initializeAuth();
@@ -34,7 +35,7 @@ class AuthService {
     }
     
     // Nasłuchujemy na zmiany stanu autoryzacji
-    this.supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = this.supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
         await this.handleSession(session);
       } else if (event === 'SIGNED_OUT') {
@@ -48,6 +49,8 @@ class AuthService {
         }));
       }
     });
+    
+    this.authSubscription = subscription;
   }
 
   async handleSession(session) {
@@ -110,6 +113,14 @@ class AuthService {
     window.dispatchEvent(new CustomEvent('authStateChanged', { 
       detail: { user: null, isLoggedIn: false } 
     }));
+  }
+
+  // Czyszczenie zasobów (anulowanie subskrypcji)
+  cleanup() {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+      this.authSubscription = null;
+    }
   }
 
   // Sprawdza czy użytkownik jest zalogowany
