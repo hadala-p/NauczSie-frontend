@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import authService from './services/authService';
 
 function App() {
@@ -23,27 +23,22 @@ function App() {
   const [categories, setCategories] = useState([]);
   const [tenses, setTenses] = useState([]);
 
-  // Ładowanie danych z API
   useEffect(() => {
     loadLanguages();
     loadCategories();
     loadTenses();
-    
-    // Obsługa callbacku z OAuth - Supabase automatycznie przetwarza hash fragment
-    // Sprawdzamy czy jesteśmy na stronie callbacku
+  }, [loadLanguages, loadCategories, loadTenses]);
+
+  useEffect(() => {
     if (window.location.pathname === '/auth/callback') {
-      // Supabase przetworzy callback automatycznie w authService.initializeAuth()
-      // Usuwamy hash z URL i przekierowujemy na główną stronę
       setTimeout(() => {
         window.history.replaceState({}, '', '/');
         checkAuthState();
       }, 500);
     }
     
-    // Sprawdzamy stan autoryzacji
     checkAuthState();
     
-    // Nasłuchujemy na zmiany stanu autoryzacji
     const handleAuthStateChange = (event) => {
       setIsLoggedIn(event.detail.isLoggedIn);
       setUser(event.detail.user);
@@ -63,7 +58,7 @@ function App() {
     setUser(currentUser);
   };
 
-  const loadLanguages = async () => {
+  const loadLanguages = useCallback(async () => {
     try {
       const response = await fetch(`${apiUrl}/languages`);
       const data = await response.json();
@@ -71,9 +66,9 @@ function App() {
     } catch (err) {
       console.error('Błąd ładowania języków:', err);
     }
-  };
+  }, [apiUrl]);
 
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     try {
       const response = await fetch(`${apiUrl}/categories`);
       const data = await response.json();
@@ -81,9 +76,9 @@ function App() {
     } catch (err) {
       console.error('Błąd ładowania kategorii:', err);
     }
-  };
+  }, [apiUrl]);
 
-  const loadTenses = async () => {
+  const loadTenses = useCallback(async () => {
     try {
       const response = await fetch(`${apiUrl}/tenses`);
       const data = await response.json();
@@ -91,7 +86,7 @@ function App() {
     } catch (err) {
       console.error('Błąd ładowania czasów:', err);
     }
-  };
+  }, [apiUrl]);
 
   const generateWords = async () => {
     if (!openaiKey.trim()) {
