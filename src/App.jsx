@@ -49,14 +49,14 @@ function App() {
     return () => {
       window.removeEventListener('authStateChanged', handleAuthStateChange);
     };
-  }, []);
+  }, [checkAuthState]);
 
-  const checkAuthState = () => {
+  const checkAuthState = useCallback(() => {
     const loggedIn = authService.isLoggedIn();
     const currentUser = authService.getCurrentUser();
     setIsLoggedIn(loggedIn);
     setUser(currentUser);
-  };
+  }, []);
 
   const loadLanguages = useCallback(async () => {
     try {
