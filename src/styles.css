@@ -646,10 +646,6 @@ header {
   font-size: 0.95rem;
 }
 
-.sentence-full strong {
-  color: #111827;
-}
-
 .sentence-main {
   display: flex;
   justify-content: space-between;

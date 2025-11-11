@@ -606,20 +606,20 @@ function App() {
                         </div>
                       )}
 
-                      <div className="sentence-extra">
-                        <p className="sentence-full">
-                          Pełne zdanie:{' '}
-                          <strong>{sentence.sentence}</strong>
-                        </p>
-                        <p className="sentence-translation">
-                          Tłumaczenie: {sentence.translation}
-                        </p>
-                      </div>
+                      {result?.status && result.status !== 'empty' && (
+                        <>
+                          <div className="sentence-extra">
+                            <p className="sentence-translation">
+                              Tłumaczenie: {sentence.translation}
+                            </p>
+                          </div>
 
-                      {sentence.explanation && (
-                        <div className="explanation">
-                          <strong>Wyjaśnienie:</strong> {sentence.explanation}
-                        </div>
+                          {sentence.explanation && (
+                            <div className="explanation">
+                              <strong>Wyjaśnienie:</strong> {sentence.explanation}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   );
