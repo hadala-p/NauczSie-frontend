@@ -321,6 +321,23 @@ function App() {
       .toLowerCase();
   };
 
+  const formatInfinitive = (value) => {
+    if (!value) return '';
+    let formatted = String(value).trim();
+    if (formatted.toLowerCase().startsWith('to ')) {
+      formatted = formatted.slice(3);
+    }
+    if (formatted.startsWith('(') && formatted.endsWith(')')) {
+      formatted = formatted.slice(1, -1).trim();
+    }
+    return formatted;
+  };
+
+  const formatClozeSentence = (value) => {
+    if (!value) return '';
+    return String(value).replace(/\(\s*to\s+([^)]+)\)/gi, '($1)');
+  };
+
   const handleSentenceAnswerChange = (index, value) => {
     setSentenceAnswers((prev) => ({
       ...prev,
@@ -565,12 +582,12 @@ function App() {
 
                   return (
                     <div key={index} className="sentence-card">
-                      <p className="sentence-cloze">{sentence.cloze_sentence}</p>
+                      <p className="sentence-cloze">{formatClozeSentence(sentence.cloze_sentence)}</p>
 
                       {sentence.verb_infinitive && (
                         <p className="sentence-hint">
                           Czasownik do uzupełnienia:{' '}
-                          <strong>{sentence.verb_infinitive}</strong>
+                          <strong>{formatInfinitive(sentence.verb_infinitive)}</strong>
                         </p>
                       )}
 
