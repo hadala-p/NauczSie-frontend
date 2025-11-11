@@ -202,8 +202,29 @@ function App() {
       const response = await fetch(`${apiUrl}/words/flashcards?${params.toString()}`);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Błąd ładowania fiszek');
+git         let errorMessage = 'Błąd ładowania fiszek';
+
+        try {
+          const errorData = await response.json();
+          if (errorData?.detail) {
+            if (typeof errorData.detail === 'string') {
+              errorMessage = errorData.detail;
+            } else if (Array.isArray(errorData.detail)) {
+              errorMessage = errorData.detail
+                .map((item) => item.msg || JSON.stringify(item))
+                .join(', ');
+            } else if (typeof errorData.detail === 'object') {
+              errorMessage = errorData.detail.msg || JSON.stringify(errorData.detail);
+            }
+          }
+        } catch (parseError) {
+          const text = await response.text();
+          if (text) {
+            errorMessage = text;
+          }
+        }
+
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
