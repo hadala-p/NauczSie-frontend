@@ -215,15 +215,223 @@ header {
 
 /* Sekcje */
 .words-section,
-.sentences-section {
+.sentences-section,
+.flashcards-section {
   padding: 2rem;
 }
 
 .words-section h2,
-.sentences-section h2 {
+.sentences-section h2,
+.flashcards-section h2 {
   margin: 0 0 1.5rem 0;
   color: #374151;
   font-size: 1.5rem;
+}
+
+.flashcards-description {
+  margin-bottom: 1.5rem;
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+.flashcard-wrapper {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.flashcard {
+  position: relative;
+  width: min(420px, 100%);
+  min-height: 220px;
+  background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+  color: white;
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.flashcard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.35);
+}
+
+.flashcard.flipped {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.flashcard-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.85;
+}
+
+.flashcard-word {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin: 1rem 0;
+  word-break: break-word;
+}
+
+.flashcard-hint {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.flashcard-example {
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.flashcard-example em {
+  display: block;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+.flashcard-category {
+  position: absolute;
+  bottom: 1rem;
+  right: 1.5rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.7;
+}
+
+.flashcard-status {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  letter-spacing: 0.5px;
+}
+
+.flashcard-status.known {
+  background: rgba(16, 185, 129, 0.9);
+}
+
+.flashcard-status.unknown {
+  background: rgba(239, 68, 68, 0.9);
+}
+
+.flashcard-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.flashcard-action-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.75rem 1.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  color: white;
+  box-shadow: var(--shadow);
+}
+
+.flashcard-action-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.flashcard-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.flashcard-action-btn.known {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+}
+
+.flashcard-action-btn.unknown {
+  background: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
+}
+
+.flashcard-controls {
+  margin-top: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.flashcard-progress {
+  font-weight: 600;
+  color: #374151;
+}
+
+.flashcard-session-info {
+  margin-top: 1.5rem;
+  text-align: center;
+  color: #4b5563;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.flashcard-summary {
+  background: #ecfdf5;
+  border: 2px solid #6ee7b7;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  color: #047857;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.outline-btn {
+  background: transparent;
+  color: var(--accent);
+  border: 2px solid var(--accent);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.outline-btn:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.outline-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.flashcards-empty {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  color: #6b7280;
+  text-align: center;
+  background: #f9fafb;
 }
 
 .category-selector,
