@@ -538,7 +538,7 @@ function App() {
                   >
                     <span className="flashcard-label">{activeLanguageLabel}</span>
                     <span className="flashcard-word">
-                      {showTranslation && currentFlashcard
+                      {showTranslation
                         ? currentFlashcard.translation
                         : currentFlashcard.word}
                     </span>
