@@ -11,6 +11,12 @@ function App() {
   const [selectedTense, setSelectedTense] = useState('present_simple');
   const [words, setWords] = useState([]);
   const [sentences, setSentences] = useState([]);
+  const [flashcards, setFlashcards] = useState([]);
+  const [flashcardsLoading, setFlashcardsLoading] = useState(false);
+  const [flashcardIndex, setFlashcardIndex] = useState(0);
+  const [isFlashcardFlipped, setIsFlashcardFlipped] = useState(false);
+  const [flashcardResults, setFlashcardResults] = useState({});
+  const [isSessionComplete, setIsSessionComplete] = useState(false);
   const [loading, setLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [error, setError] = useState('');
@@ -22,6 +28,21 @@ function App() {
   const [languages, setLanguages] = useState([]);
   const [categories, setCategories] = useState([]);
   const [tenses, setTenses] = useState([]);
+
+  const resolveLanguageName = (code) => {
+    const match = languages.find((lang) => lang.code === code);
+    return match ? match.name : code;
+  };
+
+  const findNextUnseenIndex = (startIndex, total, results) => {
+    for (let offset = 1; offset <= total; offset += 1) {
+      const candidate = (startIndex + offset) % total;
+      if (!Object.prototype.hasOwnProperty.call(results, candidate)) {
+        return candidate;
+      }
+    }
+    return startIndex;
+  };
 
   // Ładowanie danych z API
   useEffect(() => {
@@ -167,6 +188,105 @@ function App() {
     }
   };
 
+  const loadFlashcards = async () => {
+    setFlashcardsLoading(true);
+    setError('');
+
+    try {
+      const params = new URLSearchParams({
+        native_language: nativeLanguage,
+        target_language: targetLanguage,
+        limit: '10',
+      });
+
+      const response = await fetch(`${apiUrl}/words/flashcards?${params.toString()}`);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Błąd ładowania fiszek');
+      }
+
+      const data = await response.json();
+      setFlashcards(data.words);
+      setFlashcardResults({});
+      setIsSessionComplete(false);
+      setFlashcardIndex(0);
+      setIsFlashcardFlipped(false);
+
+      if (data.words.length === 0) {
+        setError('Brak zapisanych słówek dla wybranych języków. Wygeneruj nowe słówka, aby stworzyć fiszki.');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setFlashcardsLoading(false);
+    }
+  };
+
+  const handleFlipFlashcard = () => {
+    if (!flashcards.length) return;
+    setIsFlashcardFlipped((prev) => !prev);
+  };
+
+  const handleNextFlashcard = () => {
+    if (!flashcards.length) return;
+    setFlashcardIndex((prev) => (prev + 1) % flashcards.length);
+    setIsFlashcardFlipped(false);
+  };
+
+  const handlePreviousFlashcard = () => {
+    if (!flashcards.length) return;
+    setFlashcardIndex((prev) => (prev - 1 + flashcards.length) % flashcards.length);
+    setIsFlashcardFlipped(false);
+  };
+
+  const handleMarkFlashcard = (resultType) => {
+    if (!flashcards.length) return;
+
+    setFlashcardResults((prev) => {
+      const alreadyRated = Object.prototype.hasOwnProperty.call(prev, flashcardIndex);
+      const updated = {
+        ...prev,
+        [flashcardIndex]: resultType,
+      };
+
+      if (!alreadyRated) {
+        if (Object.keys(updated).length === flashcards.length) {
+          setIsSessionComplete(true);
+        } else {
+          const nextIndex = findNextUnseenIndex(flashcardIndex, flashcards.length, updated);
+          setFlashcardIndex(nextIndex);
+        }
+      }
+
+      setIsFlashcardFlipped(false);
+      return updated;
+    });
+  };
+
+  const handleResetFlashcardSession = () => {
+    if (!flashcards.length) return;
+    setFlashcardResults({});
+    setIsSessionComplete(false);
+    setFlashcardIndex(0);
+    setIsFlashcardFlipped(false);
+  };
+
+  const totalFlashcards = flashcards.length;
+  const reviewedFlashcards = Object.keys(flashcardResults).length;
+  const flashcardResultValues = Object.values(flashcardResults);
+  const knownFlashcards = flashcardResultValues.filter((value) => value === 'known').length;
+  const unknownFlashcards = flashcardResultValues.filter((value) => value === 'unknown').length;
+  const currentFlashcard = totalFlashcards > 0 ? flashcards[flashcardIndex] : null;
+  const currentFlashcardResult = currentFlashcard ? flashcardResults[flashcardIndex] : undefined;
+  const showTranslation = isFlashcardFlipped;
+  const activeLanguageLabel = showTranslation
+    ? resolveLanguageName(nativeLanguage)
+    : resolveLanguageName(targetLanguage);
+  const flashcardCategoryLabel = currentFlashcard?.category
+    ? currentFlashcard.category.replace(/_/g, ' ')
+    : 'brak kategorii';
+
   const handleGoogleLogin = async () => {
     try {
       setAuthLoading(true);
@@ -277,6 +397,12 @@ function App() {
         >
           📝 Zdania
         </button>
+        <button 
+          className={`tab ${activeTab === 'flashcards' ? 'active' : ''}`}
+          onClick={() => setActiveTab('flashcards')}
+        >
+          🃏 Fiszki
+        </button>
       </div>
 
       {/* Sekcja słówek */}
@@ -375,6 +501,125 @@ function App() {
                 ))}
               </div>
             </div>
+          )}
+        </section>
+      )}
+
+      {activeTab === 'flashcards' && (
+        <section className="flashcards-section">
+          <h2>🃏 Nauka z fiszkami</h2>
+          <p className="flashcards-description">
+            Fiszki powstają na podstawie zapisanych wcześniej słówek. Kliknij kartę, aby zobaczyć tłumaczenie.
+          </p>
+
+          <button 
+            className="generate-btn"
+            onClick={loadFlashcards}
+            disabled={flashcardsLoading}
+          >
+            {flashcardsLoading ? 'Ładuję fiszki...' : 'Pobierz fiszki'}
+          </button>
+
+          {flashcards.length > 0 ? (
+            <>
+              <div className="flashcard-wrapper">
+                {currentFlashcard && (
+                  <div
+                    className={`flashcard ${showTranslation ? 'flipped' : ''}`}
+                    onClick={handleFlipFlashcard}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        handleFlipFlashcard();
+                      }
+                    }}
+                  >
+                    <span className="flashcard-label">{activeLanguageLabel}</span>
+                    <span className="flashcard-word">
+                      {showTranslation
+                        ? currentFlashcard.translation
+                        : currentFlashcard.word}
+                    </span>
+                    <span className="flashcard-hint">
+                      {showTranslation ? 'Tłumaczenie' : 'Kliknij, aby zobaczyć tłumaczenie'}
+                    </span>
+                    {showTranslation && currentFlashcard?.example_sentence && (
+                      <div className="flashcard-example">
+                        <strong>Przykład:</strong>
+                        <em>{currentFlashcard.example_sentence}</em>
+                      </div>
+                    )}
+                    {currentFlashcardResult && (
+                      <span className={`flashcard-status ${currentFlashcardResult}`}>
+                        {currentFlashcardResult === 'known' ? 'Znam to słówko' : 'Do powtórki'}
+                      </span>
+                    )}
+                    <span className="flashcard-category">
+                      {flashcardCategoryLabel}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flashcard-actions">
+                <button 
+                  className="flashcard-action-btn known"
+                  onClick={() => handleMarkFlashcard('known')}
+                  disabled={!currentFlashcard}
+                >
+                  ✅ Znam
+                </button>
+                <button 
+                  className="flashcard-action-btn unknown"
+                  onClick={() => handleMarkFlashcard('unknown')}
+                  disabled={!currentFlashcard}
+                >
+                  ❓ Nie znam
+                </button>
+              </div>
+
+              <div className="flashcard-controls">
+                <button 
+                  className="outline-btn"
+                  onClick={handlePreviousFlashcard}
+                  disabled={flashcards.length <= 1}
+                >
+                  ◀ Poprzednia
+                </button>
+                <span className="flashcard-progress">
+                  {flashcardIndex + 1} / {flashcards.length}
+                </span>
+                <button 
+                  className="outline-btn"
+                  onClick={handleNextFlashcard}
+                  disabled={flashcards.length <= 1}
+                >
+                  Następna ▶
+                </button>
+              </div>
+
+              <div className="flashcard-session-info">
+                <div>
+                  Zapamiętane: <strong>{knownFlashcards}</strong> • Do powtórki: <strong>{unknownFlashcards}</strong> • Przerobione: <strong>{reviewedFlashcards}</strong> / {totalFlashcards}
+                </div>
+                {isSessionComplete && (
+                  <div className="flashcard-summary">
+                    <span>Świetnie! Ukończono sesję fiszek.</span>
+                    <button className="outline-btn" onClick={handleResetFlashcardSession}>
+                      Powtórz sesję
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            !flashcardsLoading && (
+              <div className="flashcards-empty">
+                Brak fiszek do wyświetlenia. Wygeneruj słówka, aby zapisać je w bazie i wróć do tej zakładki.
+              </div>
+            )
           )}
         </section>
       )}
