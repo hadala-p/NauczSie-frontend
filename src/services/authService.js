@@ -16,7 +16,7 @@ class AuthService {
     this.supabase = supabaseUrl && supabaseAnonKey 
       ? createClient(supabaseUrl, supabaseAnonKey)
       : null;
-    
+    this.siteUrl = import.meta.env.VITE_SITE_URL;
     this.token = null;
     this.user = null;
     
@@ -79,7 +79,8 @@ class AuthService {
       throw new Error('Supabase nie jest skonfigurowany. Sprawdź VITE_SUPABASE_URL i VITE_SUPABASE_ANON_KEY w .env');
     }
 
-    const redirectTo = `${window.location.origin}/auth/callback`;
+    const redirectBase = this.siteUrl || window.location.origin;
+    const redirectTo = `${redirectBase.replace(/\/$/, '')}/auth/callback`;
     
     const { data, error } = await this.supabase.auth.signInWithOAuth({
       provider: 'google',
