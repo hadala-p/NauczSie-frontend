@@ -202,7 +202,7 @@ function App() {
       const response = await fetch(`${apiUrl}/words/flashcards?${params.toString()}`);
 
       if (!response.ok) {
-git         let errorMessage = 'Błąd ładowania fiszek';
+        let errorMessage = 'Błąd ładowania fiszek';
 
         try {
           const errorData = await response.json();
