@@ -11,6 +11,8 @@ function App() {
   const [selectedTense, setSelectedTense] = useState('present_simple');
   const [words, setWords] = useState([]);
   const [sentences, setSentences] = useState([]);
+  const [sentenceAnswers, setSentenceAnswers] = useState({});
+  const [sentenceResults, setSentenceResults] = useState({});
   const [flashcards, setFlashcards] = useState([]);
   const [flashcardsLoading, setFlashcardsLoading] = useState(false);
   const [flashcardIndex, setFlashcardIndex] = useState(0);
@@ -181,6 +183,8 @@ function App() {
 
       const data = await response.json();
       setSentences(data.sentences);
+      setSentenceAnswers({});
+      setSentenceResults({});
     } catch (err) {
       setError(err.message);
     } finally {
@@ -307,6 +311,51 @@ function App() {
   const flashcardCategoryLabel = currentFlashcard?.category
     ? currentFlashcard.category.replace(/_/g, ' ')
     : 'brak kategorii';
+
+  const normalizeAnswer = (value) => value
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/[.!?]+$/g, '')
+    .toLowerCase();
+
+  const handleSentenceAnswerChange = (index, value) => {
+    setSentenceAnswers((prev) => ({
+      ...prev,
+      [index]: value,
+    }));
+  };
+
+  const checkSentenceAnswer = (index) => {
+    const currentSentence = sentences[index];
+    if (!currentSentence) {
+      return;
+    }
+
+    const rawAnswer = sentenceAnswers[index] ?? '';
+    if (!rawAnswer.trim()) {
+      setSentenceResults((prev) => ({
+        ...prev,
+        [index]: { status: 'empty' },
+      }));
+      return;
+    }
+
+    const acceptedAnswers = (currentSentence.acceptable_answers && currentSentence.acceptable_answers.length > 0
+      ? currentSentence.acceptable_answers
+      : [currentSentence.correct_answer]
+    );
+
+    const normalizedAccepted = acceptedAnswers.map(normalizeAnswer);
+    const isCorrect = normalizedAccepted.includes(normalizeAnswer(rawAnswer));
+
+    setSentenceResults((prev) => ({
+      ...prev,
+      [index]: {
+        status: isCorrect ? 'correct' : 'incorrect',
+        userAnswer: rawAnswer,
+      },
+    }));
+  };
 
   const handleGoogleLogin = async () => {
     try {
@@ -507,19 +556,74 @@ function App() {
             <div className="results">
               <h3>Wygenerowane zdania:</h3>
               <div className="sentences-list">
-                {sentences.map((sentence, index) => (
-                  <div key={index} className="sentence-card">
-                    <div className="sentence-main">
-                      <span className="sentence">{sentence.sentence}</span>
-                      <span className="translation">{sentence.translation}</span>
-                    </div>
-                    {sentence.explanation && (
-                      <div className="explanation">
-                        <strong>Wyjaśnienie:</strong> {sentence.explanation}
+                {sentences.map((sentence, index) => {
+                  const result = sentenceResults[index];
+                  const answerValue = sentenceAnswers[index] ?? '';
+
+                  return (
+                    <div key={index} className="sentence-card">
+                      <p className="sentence-cloze">{sentence.cloze_sentence}</p>
+
+                      {sentence.verb_infinitive && (
+                        <p className="sentence-hint">
+                          Czasownik do uzupełnienia:{' '}
+                          <strong>{sentence.verb_infinitive}</strong>
+                        </p>
+                      )}
+
+                      <div className="sentence-input-row">
+                        <input
+                          type="text"
+                          value={answerValue}
+                          onChange={(event) => handleSentenceAnswerChange(index, event.target.value)}
+                          placeholder="Wpisz brakującą formę czasownika"
+                        />
+                        <button
+                          className="outline-btn"
+                          onClick={() => checkSentenceAnswer(index)}
+                        >
+                          Sprawdź
+                        </button>
                       </div>
-                    )}
-                  </div>
-                ))}
+
+                      {result?.status === 'empty' && (
+                        <div className="sentence-result info">
+                          Wpisz odpowiedź, aby sprawdzić.
+                        </div>
+                      )}
+
+                      {result?.status === 'correct' && (
+                        <div className="sentence-result correct">
+                          Świetnie! Poprawna odpowiedź:{' '}
+                          <strong>{sentence.correct_answer}</strong>
+                        </div>
+                      )}
+
+                      {result?.status === 'incorrect' && (
+                        <div className="sentence-result incorrect">
+                          Poprawna odpowiedź to:{' '}
+                          <strong>{sentence.correct_answer}</strong>
+                        </div>
+                      )}
+
+                      <div className="sentence-extra">
+                        <p className="sentence-full">
+                          Pełne zdanie:{' '}
+                          <strong>{sentence.sentence}</strong>
+                        </p>
+                        <p className="sentence-translation">
+                          Tłumaczenie: {sentence.translation}
+                        </p>
+                      </div>
+
+                      {sentence.explanation && (
+                        <div className="explanation">
+                          <strong>Wyjaśnienie:</strong> {sentence.explanation}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
