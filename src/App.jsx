@@ -602,8 +602,7 @@ function App() {
 
               <div className="flashcard-session-info">
                 <div>
-                  Zapamiętane: <strong>{knownFlashcards}</strong> • Do powtórki: <strong>{unknownFlashcards}</strong> •
-                  Przerobione: <strong>{reviewedFlashcards}</strong> / {totalFlashcards}
+                  Zapamiętane: <strong>{knownFlashcards}</strong> • Do powtórki: <strong>{unknownFlashcards}</strong> • Przerobione: <strong>{reviewedFlashcards}</strong> / {totalFlashcards}
                 </div>
                 {isSessionComplete && (
                   <div className="flashcard-summary">
