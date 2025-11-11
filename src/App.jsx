@@ -607,7 +607,7 @@ function App() {
                 </div>
                 {isSessionComplete && (
                   <div className="flashcard-summary">
-                    <span>Świetnie! Ukończyłeś sesję fiszek.</span>
+                    <span>Świetnie! Ukończono sesję fiszek.</span>
                     <button className="outline-btn" onClick={handleResetFlashcardSession}>
                       Powtórz sesję
                     </button>
