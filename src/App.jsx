@@ -312,11 +312,14 @@ function App() {
     ? currentFlashcard.category.replace(/_/g, ' ')
     : 'brak kategorii';
 
-  const normalizeAnswer = (value) => value
-    .trim()
-    .replace(/\s+/g, ' ')
-    .replace(/[.!?]+$/g, '')
-    .toLowerCase();
+  const normalizeAnswer = (value) => {
+    if (value === null || value === undefined) return '';
+    return String(value)
+      .trim()
+      .replace(/\s+/g, ' ')
+      .replace(/[.!?]+$/g, '')
+      .toLowerCase();
+  };
 
   const handleSentenceAnswerChange = (index, value) => {
     setSentenceAnswers((prev) => ({
